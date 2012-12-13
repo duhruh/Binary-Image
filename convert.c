@@ -67,14 +67,15 @@ PKG main (int argv , char *args[]){
         fclose(file);
         exit(1);
     }
+    int read = 0;
 
         /* BMP Header */
-        fread (header.signature, 1, 1, file);
-        fread (header.signature+1, 1, 1 , file);
-        fread (&(header.file_size), 1, 4, file);
-        fread (&(header.reserved1), 1, 2, file);
-        fread (&(header.reserved2), 1, 2, file);
-        fread (&(header.offset), 1, 4, file);
+        read+=fread (header.signature, 1, 1, file);
+        read+=fread (header.signature+1, 1, 1 , file);
+        read+=fread (&(header.file_size), 1, 4, file);
+        read+=fread (&(header.reserved1), 1, 2, file);
+        read+=fread (&(header.reserved2), 1, 2, file);
+        read+=fread (&(header.offset), 1, 4, file);
         
         printf("BMP Header\n");
         printf("Filetype: %c%c\n", header.signature[0], header.signature[1]);
@@ -82,20 +83,22 @@ PKG main (int argv , char *args[]){
         printf("Reserved 1 and 2: %d/%d\n",header.reserved1,header.reserved2);
         printf("Offset starting address of the byte where the bitmap image data (pixel array) can be found: %d\n", header.offset);
 
-        /* DIB Header */
-        fread (&(dib_header.dib_size), 1, 4, file);
-        fread(&(dib_header.width), 1, 4, file);
-        fread(&(dib_header.height), 1, 4, file);
-        fread(&(dib_header.planes), 1, 2, file);
-        fread(&(dib_header.bits), 1, 2, file);
-        fread(&(dib_header.compression),1,4,file);
-        fread(&(dib_header.image_size),1,4,file);
-        fread(&(dib_header.xresolution),1,4,file);
-        fread(&(dib_header.yresolution),1,4,file);
-        fread(&(dib_header.ncolors),1,4,file);
-        fread(&(dib_header.important_colors),1,4,file);
+        printf("------------------------------\n");
 
-        printf("------------------\nDIB Header\n");
+        /* DIB Header */
+        read+=fread (&(dib_header.dib_size), 1, 4, file);
+        read+=fread(&(dib_header.width), 1, 4, file);
+        read+=fread(&(dib_header.height), 1, 4, file);
+        read+=fread(&(dib_header.planes), 1, 2, file);
+        read+=fread(&(dib_header.bits), 1, 2, file);
+        read+=fread(&(dib_header.compression),1,4,file);
+        read+=fread(&(dib_header.image_size),1,4,file);
+        read+=fread(&(dib_header.xresolution),1,4,file);
+        read+=fread(&(dib_header.yresolution),1,4,file);
+        read+=fread(&(dib_header.ncolors),1,4,file);
+        read+=fread(&(dib_header.important_colors),1,4,file);
+
+        printf("DIB Header\n");
         printf("DIB size: %d\n",dib_header.dib_size);
         printf("Image width/height: %dx%d\n",dib_header.width,dib_header.height);
         printf("Number of planes: %d\n",dib_header.planes);
@@ -105,8 +108,14 @@ PKG main (int argv , char *args[]){
         printf("Horizontal/Vertical resolution of the image pixel/meter: %dx%d\n",dib_header.xresolution,dib_header.yresolution);
         printf("Number of colors in the palette: %d\n",dib_header.ncolors);
         printf("Number of importan colors 0 means all: %d\n",dib_header.important_colors);
+    
+        char* junk = malloc(header.offset-read);
+        if(read != header.offset){
+            fread(junk,header.offset-read,1,file);
+        }
 
-    fread(buffer,fileLen-header.offset,sizeof(unsigned char),file);
+    //fread(buffer,fileLen-header.offset,sizeof(unsigned char),file);
+    fread(buffer,dib_header.image_size,1,file);
     fclose(file);
 
     int i=0;
@@ -116,15 +125,16 @@ PKG main (int argv , char *args[]){
     int j = 1;
     int image[dib_header.height][dib_header.width];
     int l=1,m=0;
-    int bytes = (dib_header.width * 3) + 2;
+    int bytes = (dib_header.width * 3);
+    if(bytes%4) bytes+=(bytes%4);
     PKG imageStream;
     imageStream.width = dib_header.width;
     imageStream.height = dib_header.height;
     imageStream.image = malloc(sizeof(int*));
 
-    while (i < fileLen-header.offset){
+    while (i < dib_header.image_size){
        // Uncomment this to print out raw byte data.
-       // printf("%02X ",((unsigned char)buffer[i]));
+        //printf("%02X ",((unsigned char)buffer[i]));
         
         if(!(j%3) && (unsigned char)buffer[i] == zero){
             image[dib_header.height-l][m] = 0;
@@ -134,7 +144,7 @@ PKG main (int argv , char *args[]){
             m++;
         }
 
-        if(!( j % bytes)){  j =0; l++;m=0; }
+        if(!( j % bytes)){  j =0; l++;m=0;}
         i++;
         j++;
     }
