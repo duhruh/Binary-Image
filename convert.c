@@ -26,16 +26,36 @@ typedef struct {
     unsigned int important_colors;  /* important colors */
 } DIB_HEADER;
 
+void usage_error();
+PKG create_waterfall(int,int,int);
+PKG create_cascade(int,int);
+
 PKG main (int argv , char *args[]){
 
-    if(argv < 2){
-        fprintf(stderr,"usage: convert [file].png\n");
-        exit(1);
+    if(argv < 4){
+        usage_error();
+    }else if(strstr(args[1],"-h")){
+        usage_error();
+    }else if(strstr(args[1],"-waterfall")){
+        if(argv < 4){
+            usage_error();
+        }else{
+            if(argv < 5){
+                return create_waterfall(atoi(args[2]),atoi(args[3]),1);
+             }else if(strstr(args[4],"-reverse")){
+                return create_waterfall(atoi(args[2]),atoi(args[3]),0);
+             }else{usage_error();}
+        }
+    }else if(strstr(args[1],"-cascade")){
+        if(argv < 4){
+            usage_error();
+        }else{
+            return create_cascade(atoi(args[2]),atoi(args[3]));
+        }
+    }else if(!strstr(args[1],".png")){
+        usage_error();
     }
-    if(!strstr(args[1],".png")){
-        fprintf(stderr,"usage: convert [file].png\n");
-        exit(1);
-    }
+
 
 
     FILE *file;
@@ -46,7 +66,7 @@ PKG main (int argv , char *args[]){
 
     char* buf = malloc(sizeof(char*));
     //-type truecolor
-    sprintf(buf,"convert %s -resize 30x30 -monochrome out.bmp\n",args[1]);
+    sprintf(buf,"convert %s -resize %dx%d -monochrome out.bmp\n",args[1],atoi(args[2]),atoi(args[3]));
     system(buf);
 
 
@@ -69,50 +89,50 @@ PKG main (int argv , char *args[]){
     }
     int read = 0;
 
-        /* BMP Header */
-        read+=fread (header.signature, 1, 1, file);
-        read+=fread (header.signature+1, 1, 1 , file);
-        read+=fread (&(header.file_size), 1, 4, file);
-        read+=fread (&(header.reserved1), 1, 2, file);
-        read+=fread (&(header.reserved2), 1, 2, file);
-        read+=fread (&(header.offset), 1, 4, file);
+    /* BMP Header */
+    read+=fread (header.signature, 1, 1, file);
+    read+=fread (header.signature+1, 1, 1 , file);
+    read+=fread (&(header.file_size), 1, 4, file);
+    read+=fread (&(header.reserved1), 1, 2, file);
+    read+=fread (&(header.reserved2), 1, 2, file);
+    read+=fread (&(header.offset), 1, 4, file);
         
-        printf("BMP Header\n");
-        printf("Filetype: %c%c\n", header.signature[0], header.signature[1]);
-        printf("BMP Size in bytes: %u\n", header.file_size);
-        printf("Reserved 1 and 2: %d/%d\n",header.reserved1,header.reserved2);
-        printf("Offset starting address of the byte where the bitmap image data (pixel array) can be found: %d\n", header.offset);
+    printf("BMP Header\n");
+    printf("Filetype: %c%c\n", header.signature[0], header.signature[1]);
+    printf("BMP Size in bytes: %u\n", header.file_size);
+    printf("Reserved 1 and 2: %d/%d\n",header.reserved1,header.reserved2);
+    printf("Offset starting address of the byte where the bitmap image data (pixel array) can be found: %d\n", header.offset);
 
-        printf("------------------------------\n");
+    printf("------------------------------\n");
 
-        /* DIB Header */
-        read+=fread (&(dib_header.dib_size), 1, 4, file);
-        read+=fread(&(dib_header.width), 1, 4, file);
-        read+=fread(&(dib_header.height), 1, 4, file);
-        read+=fread(&(dib_header.planes), 1, 2, file);
-        read+=fread(&(dib_header.bits), 1, 2, file);
-        read+=fread(&(dib_header.compression),1,4,file);
-        read+=fread(&(dib_header.image_size),1,4,file);
-        read+=fread(&(dib_header.xresolution),1,4,file);
-        read+=fread(&(dib_header.yresolution),1,4,file);
-        read+=fread(&(dib_header.ncolors),1,4,file);
-        read+=fread(&(dib_header.important_colors),1,4,file);
+    /* DIB Header */
+    read+=fread (&(dib_header.dib_size), 1, 4, file);
+    read+=fread(&(dib_header.width), 1, 4, file);
+    read+=fread(&(dib_header.height), 1, 4, file);
+    read+=fread(&(dib_header.planes), 1, 2, file);
+    read+=fread(&(dib_header.bits), 1, 2, file);
+    read+=fread(&(dib_header.compression),1,4,file);
+    read+=fread(&(dib_header.image_size),1,4,file);
+    read+=fread(&(dib_header.xresolution),1,4,file);
+    read+=fread(&(dib_header.yresolution),1,4,file);
+    read+=fread(&(dib_header.ncolors),1,4,file);
+    read+=fread(&(dib_header.important_colors),1,4,file);
 
-        printf("DIB Header\n");
-        printf("DIB size: %d\n",dib_header.dib_size);
-        printf("Image width/height: %dx%d\n",dib_header.width,dib_header.height);
-        printf("Number of planes: %d\n",dib_header.planes);
-        printf("Bits per pixel: %d\n",dib_header.bits);
-        printf("Compression method: %d\n",dib_header.compression);
-        printf("Image size of the raw bitmap data: %d\n",dib_header.image_size);
-        printf("Horizontal/Vertical resolution of the image pixel/meter: %dx%d\n",dib_header.xresolution,dib_header.yresolution);
-        printf("Number of colors in the palette: %d\n",dib_header.ncolors);
-        printf("Number of importan colors 0 means all: %d\n",dib_header.important_colors);
+    printf("DIB Header\n");
+    printf("DIB size: %d\n",dib_header.dib_size);
+    printf("Image width/height: %dx%d\n",dib_header.width,dib_header.height);
+    printf("Number of planes: %d\n",dib_header.planes);
+    printf("Bits per pixel: %d\n",dib_header.bits);
+    printf("Compression method: %d\n",dib_header.compression);
+    printf("Image size of the raw bitmap data: %d\n",dib_header.image_size);
+    printf("Horizontal/Vertical resolution of the image pixel/meter: %dx%d\n",dib_header.xresolution,dib_header.yresolution);
+    printf("Number of colors in the palette: %d\n",dib_header.ncolors);
+    printf("Number of importan colors 0 means all: %d\n",dib_header.important_colors);
     
-        char* junk = malloc(header.offset-read);
-        if(read != header.offset){
-            fread(junk,header.offset-read,1,file);
-        }
+    char* junk = malloc(header.offset-read);
+    if(read != header.offset){
+        fread(junk,header.offset-read,1,file);
+    }
 
     //fread(buffer,fileLen-header.offset,sizeof(unsigned char),file);
     fread(buffer,dib_header.image_size,1,file);
@@ -162,4 +182,78 @@ PKG main (int argv , char *args[]){
 
 
     return imageStream;
+}
+void usage_error(){
+    fprintf(stderr,"usage: convert [options]\n");
+    fprintf(stderr,"[file].png [width] [height]\n");
+    fprintf(stderr,"-waterfall [width] [height] -reverse\n");
+    fprintf(stderr,"-cascade [width] [height]\n");
+    fprintf(stderr,"-h help");
+    exit(1);
+}
+PKG create_waterfall(int width,int height,int type){
+    int water=0,flag=0,dec_asc=0;
+    int temp[height][width];
+    int i,j;
+    PKG image;
+
+    for(i = 0; i < height; i++){
+        for(j = 0; j < width; j++){
+            if(!dec_asc){
+                if(j == water && !flag){
+                    temp[i][water] = type;
+                    printf("%d",type);
+                    water++;
+                    flag = 1;
+                    if(water == width){dec_asc = 1; water--;}
+                }else {temp[i][j] = !type; printf("%d",!type);}
+            }else{
+              if(j == water && !flag){
+                temp[i][water] = type;
+                water--;
+                flag = 1;
+                printf("%d",type);
+                if(water == 0) dec_asc = 0;
+              }else{
+                temp[i][j] = !type; 
+                printf("%d",!type);
+              }
+            }
+        }
+        flag = 0;
+        printf("\n");
+    }
+    image.image = malloc(sizeof(int*));
+    int x = 0;
+    for(i=0;i<height;i++){
+        for(j=0;j<width;j++){
+            image.image[x] = temp[i][j];
+        }
+    }
+    
+    image.height = height;
+    image.width = width;
+        
+    return image;
+}
+PKG create_cascade(int width, int height){
+    int boolean = 0;
+    int count = 0;
+    PKG image;
+    image.image = malloc(sizeof(int*));    
+
+    while(count < width*height){
+        if(!boolean){
+            image.image[count] = 1;
+            boolean = 1;
+        }else{
+            image.image[count] = 0;
+            boolean = 0;
+        }
+        printf("%d",image.image[count]);
+        if(!(count % 30)){printf("\n"); boolean = !boolean;}
+        count++;
+    }
+return image;
+    
 }
