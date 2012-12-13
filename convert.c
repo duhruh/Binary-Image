@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<ctype.h>
+#include<time.h>
 
 typedef struct{
     signed int width,height;
@@ -27,31 +29,58 @@ typedef struct {
 } DIB_HEADER;
 
 void usage_error();
-PKG create_waterfall(int,int,int);
-PKG create_cascade(int,int);
+PKG create_waterfall(int,int,int,int);
+PKG create_cascade(int,int,int);
+PKG create_hbars(int,int,int);
+PKG create_random(int,int,int);
 
 PKG main (int argv , char *args[]){
 
+    int type = 0;
     if(argv < 4){
         usage_error();
-    }else if(strstr(args[1],"-h")){
+    }else if(strstr(args[1],"-h") || strstr(args[1],"-help")){
         usage_error();
-    }else if(strstr(args[1],"-waterfall")){
-        if(argv < 4){
-            usage_error();
-        }else{
-            if(argv < 5){
-                return create_waterfall(atoi(args[2]),atoi(args[3]),1);
-             }else if(strstr(args[4],"-reverse")){
-                return create_waterfall(atoi(args[2]),atoi(args[3]),0);
-             }else{usage_error();}
-        }
-    }else if(strstr(args[1],"-cascade")){
-        if(argv < 4){
-            usage_error();
-        }else{
-            return create_cascade(atoi(args[2]),atoi(args[3]));
-        }
+    }else if(argv == 5 && strstr(args[1],".png")){
+        if(strstr(args[4],"-r") || strstr(args[4],"-reverse")){
+            type = 1;
+        }else{usage_error();}
+    }else if(strstr(args[1],"-w") || strstr(args[1],"-waterfall")){
+        if(argv < 5){
+            return create_waterfall(atoi(args[2]),atoi(args[3]),0,1);
+        }else if(argv < 6){
+            if(strstr(args[4],"-r") || strstr(args[4],"-reverse")){
+                return create_waterfall(atoi(args[2]),atoi(args[3]),1,1);
+            }else if(isdigit(*args[4])){
+                return create_waterfall(atoi(args[2]),atoi(args[3]),0,atoi(args[4]));
+            }else{usage_error();}
+        }else if(isdigit(*args[4])){
+            if(strstr(args[5],"-r") || strstr(args[5],"-reverse"))
+                return create_waterfall(atoi(args[2]),atoi(args[3]),1,atoi(args[4]));
+            else{usage_error();}
+        }else if(strstr(args[4],"-r") || strstr(args[4],"-reverse")){
+            if(isdigit(*args[5]))
+                return create_waterfall(atoi(args[2]),atoi(args[3]),1,atoi(args[5]));
+            else{usage_error();}
+        }else{usage_error();}
+    }else if(strstr(args[1],"-c") || strstr(args[1],"-cascade")){
+        if(argv < 5){
+            return create_cascade(atoi(args[2]),atoi(args[3]),0);
+        }else if(strstr(args[4],"-r") || strstr(args[4],"-reverse")){
+            return create_cascade(atoi(args[2]),atoi(args[3]),1);
+        }else{usage_error();}
+    }else if(strstr(args[1],"-a") || strstr(args[1],"-auto")){
+        if(argv < 5){
+            return create_random(atoi(args[2]),atoi(args[3]),time(NULL)); 
+        }else if(isdigit(*args[4])){
+            return create_random(atoi(args[2]),atoi(args[3]),atoi(args[4]));
+        }else{usage_error();}
+    }else if(strstr(args[1],"-bars_h")){
+        if(argv < 5){
+            return create_hbars(atoi(args[2]),atoi(args[3]),0);
+        }else if(strstr(args[4],"-r") || strstr(args[4],"-reverse")){
+            return create_hbars(atoi(args[2]),atoi(args[3]),1);
+        }else{usage_error();}
     }else if(!strstr(args[1],".png")){
         usage_error();
     }
@@ -157,10 +186,10 @@ PKG main (int argv , char *args[]){
         //printf("%02X ",((unsigned char)buffer[i]));
         
         if(!(j%3) && (unsigned char)buffer[i] == zero){
-            image[dib_header.height-l][m] = 0;
+            image[dib_header.height-l][m] = type;
             m++;
         }else if(!(j%3) && (unsigned char)buffer[i] == one){
-            image[dib_header.height-l][m] = 1;
+            image[dib_header.height-l][m] = !type;
             m++;
         }
 
@@ -185,41 +214,55 @@ PKG main (int argv , char *args[]){
 }
 void usage_error(){
     fprintf(stderr,"usage: convert [options]\n");
-    fprintf(stderr,"[file].png [width] [height]\n");
-    fprintf(stderr,"-waterfall [width] [height] -reverse\n");
-    fprintf(stderr,"-cascade [width] [height]\n");
-    fprintf(stderr,"-h help");
+    fprintf(stderr,"[file].png [width] [height] -r reverse\n");
+    fprintf(stderr,"-w waterfall [width] [height] [water_width] -r reverse\n");
+    fprintf(stderr,"-c cascade [width] [height]\n");
+    fprintf(stderr,"-a auto [width] [height] [seed]\n");
+    fprintf(stderr,"-bars_h [width] [height]\n");
+    fprintf(stderr,"-h help\n");
     exit(1);
 }
-PKG create_waterfall(int width,int height,int type){
+PKG create_waterfall(int width,int height,int type,int water_width){
     int water=0,flag=0,dec_asc=0;
     int temp[height][width];
     int i,j;
+    int w_width = 1;
     PKG image;
 
     for(i = 0; i < height; i++){
         for(j = 0; j < width; j++){
             if(!dec_asc){
                 if(j == water && !flag){
-                    temp[i][water] = type;
-                    printf("%d",type);
+                    temp[i][water] = !type;
+                    printf("%d",!type);
                     water++;
-                    flag = 1;
+                    
+                    //flag = 1;
+                   // printf("THIS IS w_width: %d AND water_width: %d\n",w_width,water_width);
+                    if(w_width == water_width){
+                        flag = 1;
+                     //   printf("HOLY SHIT\n");
+                    }else{w_width++;}
                     if(water == width){dec_asc = 1; water--;}
-                }else {temp[i][j] = !type; printf("%d",!type);}
+                }else {temp[i][j] = type; printf("%d",type);}
             }else{
-              if(j == water && !flag){
-                temp[i][water] = type;
+              if((j == water || (j >= (water-water_width) && j <= water)) && !flag){
+                temp[i][j] = !type;
                 water--;
-                flag = 1;
-                printf("%d",type);
+                //flag = 1;
+                if(w_width == water_width){
+                    flag = 1;
+                }else{w_width++;}
+
+                printf("%d",!type);
                 if(water == 0) dec_asc = 0;
               }else{
-                temp[i][j] = !type; 
-                printf("%d",!type);
+                temp[i][j] = type; 
+                printf("%d",type);
               }
             }
         }
+        w_width = 1;
         flag = 0;
         printf("\n");
     }
@@ -236,7 +279,7 @@ PKG create_waterfall(int width,int height,int type){
         
     return image;
 }
-PKG create_cascade(int width, int height){
+PKG create_cascade(int width, int height,int type){
     int boolean = 0;
     int count = 0;
     PKG image;
@@ -244,16 +287,49 @@ PKG create_cascade(int width, int height){
 
     while(count < width*height){
         if(!boolean){
-            image.image[count] = 1;
+            image.image[count] = !type;
             boolean = 1;
         }else{
-            image.image[count] = 0;
+            image.image[count] = type;
             boolean = 0;
         }
         printf("%d",image.image[count]);
-        if(!(count % 30)){printf("\n"); boolean = !boolean;}
+        if(!((count+1) % width)){printf("\n"); boolean = !boolean;}
         count++;
     }
 return image;
     
+}
+PKG create_hbars(int width,int height,int type){
+    int boolean = 0;
+    int count = 0;
+    PKG image;
+    image.image = malloc(sizeof(int*));
+    while(count < width*height){
+       if(!boolean){
+            image.image[count] = type;
+            printf("%d",type);
+        }else{
+            image.image[count] = !type;
+            printf("%d",!type);
+        }
+        count ++;
+        if(!(count % width)){printf("\n"); boolean = !boolean;}
+    }
+return image;
+}
+PKG create_random(int width,int height,int seed){
+    PKG image;
+    image.image = malloc(sizeof(int*));
+    int x = 0;
+    srand(seed);
+    while(x < width*height){
+        image.image[x] = rand() % 2;
+        printf("%d",image.image[x]);
+        x++;
+        if(!(x%width)){printf("\n");}
+    }
+    image.height = height;
+    image.width = width;
+    return image;
 }
