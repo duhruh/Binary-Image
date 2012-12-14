@@ -218,7 +218,7 @@ void usage_error(){
     fprintf(stderr,"-w waterfall [width] [height] [water_width] -r reverse\n");
     fprintf(stderr,"-c cascade [width] [height]\n");
     fprintf(stderr,"-a auto [width] [height] [seed]\n");
-    fprintf(stderr,"-bars_h [width] [height]\n");
+    fprintf(stderr,"-bars_h [width] [height] -r reverse\n");
     fprintf(stderr,"-h help\n");
     exit(1);
 }
