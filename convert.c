@@ -97,7 +97,6 @@ PKG main (int argv , char *args[]){
     //-type truecolor
     sprintf(buf,"convert %s -resize %dx%d -monochrome out.bmp\n",args[1],atoi(args[2]),atoi(args[3]));
     system(buf);
-    free(buf);
 
 
     file = fopen("out.bmp", "rb");
@@ -163,7 +162,6 @@ PKG main (int argv , char *args[]){
     if(read != header.offset){
         fread(junk,header.offset-read,1,file);
     }
-    free(junk);
 
     //fread(buffer,fileLen-header.offset,sizeof(unsigned char),file);
     fread(buffer,dib_header.image_size,1,file);
@@ -224,7 +222,7 @@ void usage_error(){
     fprintf(stderr,"-h help\n");
     exit(1);
 }
-/*PKG create_waterfall(int width,int height,int type,int water_width){
+PKG create_waterfall(int width,int height,int type,int water_width){
     int water=0,flag=0,dec_asc=0;
     int temp[height][width];
     int i,j;
@@ -240,8 +238,10 @@ void usage_error(){
                     water++;
                     
                     //flag = 1;
+                   // printf("THIS IS w_width: %d AND water_width: %d\n",w_width,water_width);
                     if(w_width == water_width){
                         flag = 1;
+                     //   printf("HOLY SHIT\n");
                     }else{w_width++;}
                     if(water == width){dec_asc = 1; water--;}
                 }else {temp[i][j] = type; printf("%d",type);}
@@ -278,7 +278,7 @@ void usage_error(){
     image.width = width;
         
     return image;
-}*/
+}
 PKG create_cascade(int width, int height,int type){
     int boolean = 0;
     int count = 0;
@@ -332,36 +332,4 @@ PKG create_random(int width,int height,int seed){
     image.height = height;
     image.width = width;
     return image;
-}
-PKG create_waterfall(int width, int height, int type,int size){
-    PKG image;
-    image.image = malloc(sizeof(int*));
-    int i,j,x=0,boolean = 0,count = 0;
-    int* thing = malloc(sizeof(char*)); 
-        for(j=0;j<width;j++){
-             if(!boolean){
-                thing[x] = !type;
-                count++;
-                if(count == size){
-                    boolean = 1;
-                    count = 0;
-                }
-             }else{
-                thing[x] = type;
-                count++;
-                if(count == size){
-                    boolean = 0;
-                    count = 0;
-                }
-             }
-        }
-        x=0;
-        for(i = 0; i < height;i++){
-            for(j=0;j<width;j++){
-                image.image[x] = thing[j];
-                printf("%d",image.image[x]);
-                x++;
-            }
-            thing = (int*)((int)thing >> 1);
-        }
 }
