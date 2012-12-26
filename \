@@ -4,11 +4,6 @@
 #include<ctype.h>
 #include<time.h>
 
-#include <unistd.h>  /* UNIX standard function definitions */
-#include <fcntl.h>   /* File control definitions */
-#include <errno.h>   /* Error number definitions */
-#include <termios.h> /* POSIX terminal control definitions */
-
 typedef struct{
     signed int width,height;
     int* image;
@@ -91,6 +86,7 @@ PKG main (int argv , char *args[]){
     }
 
 
+
     FILE *file;
     unsigned char *buffer;
     unsigned long fileLen;
@@ -101,6 +97,7 @@ PKG main (int argv , char *args[]){
     //-type truecolor
     sprintf(buf,"convert %s -resize %dx%d -monochrome out.bmp\n",args[1],atoi(args[2]),atoi(args[3]));
     system(buf);
+
 
     file = fopen("out.bmp", "rb");
     if(!file){
@@ -186,7 +183,7 @@ PKG main (int argv , char *args[]){
 
     while (i < dib_header.image_size){
        // Uncomment this to print out raw byte data.
-       // printf("%02X ",((unsigned char)buffer[i]));
+        //printf("%02X ",((unsigned char)buffer[i]));
         
         if(!(j%3) && (unsigned char)buffer[i] == zero){
             image[dib_header.height-l][m] = type;
@@ -282,22 +279,20 @@ PKG create_waterfall(int width,int height,int type,int water_width){
 }
 PKG create_cascade(int width, int height,int type){
     int boolean = 0;
-    int i=0,j=0,count = 0;
+    int count = 0;
     PKG image;
     image.image = malloc(sizeof(int*));    
 
     while(count < width*height){
         if(!boolean){
             image.image[count] = !type;
-            j++;
             boolean = 1;
         }else{
             image.image[count] = type;
             boolean = 0;
-            j++;
         }
         printf("%d",image.image[count]);
-        if(!((count+1) % width)){printf("\n"); boolean = !boolean; i++;}
+        if(!((count+1) % width)){printf("\n"); boolean = !boolean;}
         count++;
     }
 return image;
